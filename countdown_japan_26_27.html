@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COUNTDOWN JAPAN 26/27 Lineup Scheduler</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@800;900&family=Noto+Sans+JP:wght@500;700;900&family=Noto+Sans+KR:wght@400;600;700;900&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cdj: {
+                            bg: '#070913',
+                            panel: '#0e1222',
+                            card: '#161c33',
+                            border: '#242e4d',
+                            cyan: '#00f0ff',
+                            magenta: '#ff0055',
+                            yellow: '#ffcc00',
+                            gold: '#ffd700'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Noto Sans KR', 'Noto Sans JP', 'sans-serif'],
+                        display: ['Montserrat', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #070913;
+            background-image: 
+                radial-gradient(circle at 50% 0%, rgba(255, 0, 85, 0.12), transparent 40%),
+                radial-gradient(circle at 10% 30%, rgba(0, 240, 255, 0.08), transparent 30%),
+                radial-gradient(circle at 90% 70%, rgba(123, 44, 191, 0.12), transparent 35%);
+            background-attachment: fixed;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #070913;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #242e4d;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00f0ff;
+        }
+
+        /* Card Drag & Drop Effects */
+        .artist-card {
+            transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+            touch-action: none;
+            user-select: none;
+        }
+        .artist-card:hover {
+            border-color: rgba(0, 240, 255, 0.5);
+            transform: translateY(-2px);
+        }
+        .artist-card.dragging {
+            opacity: 0.35;
+            transform: scale(0.96);
+            border-style: dashed !important;
+            border-color: #00f0ff !important;
+        }
+        .artist-list.drag-over {
+            background-color: rgba(0, 240, 255, 0.05);
+            border-color: #00f0ff !important;
+            box-shadow: inset 0 0 12px rgba(0, 240, 255, 0.15);
+        }
+
+        /* Neon Highlight for Selected Cards */
+        .artist-card.highlighted {
+            background: linear-gradient(135deg, rgba(22, 28, 51, 0.95) 0%, rgba(0, 240, 255, 0.22) 100%) !important;
+            border-color: #00f0ff !important;
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.4), inset 0 0 10px rgba(0, 240, 255, 0.15);
+        }
+        .artist-card.highlighted .artist-name {
+            color: #ffffff !important;
+            text-shadow: 0 0 8px rgba(0, 240, 255, 0.7);
+        }
+        .artist-card.highlighted .badge-new {
+            box-shadow: 0 0 8px rgba(255, 0, 85, 0.8);
+        }
+
+        /* Poster Title Glow */
+        .poster-title {
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.3), 0 0 35px rgba(0, 240, 255, 0.2);
+        }
+    </style>
+</head>
+<body class="text-slate-100 font-sans min-h-screen flex flex-col selection:bg-cdj-magenta selection:text-white">
+
+    <!-- Header Section -->
+    <header class="relative border-b border-cdj-border/80 pt-8 pb-6 px-4 sm:px-8 bg-slate-950/70 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+            <div class="text-center md:text-left">
+                <div class="inline-flex items-center gap-2 bg-gradient-to-r from-cdj-magenta/20 to-purple-600/20 border border-cdj-magenta/40 text-cdj-magenta text-[11px] font-extrabold px-3 py-1 rounded-full mb-2 uppercase tracking-widest">
+                    <span>rockin'on presents</span>
+                    <span class="text-slate-400">|</span>
+                    <span class="text-cdj-yellow">Supported by au</span>
+                </div>
+                <h1 class="poster-title text-3xl sm:text-5xl font-black font-display tracking-tight text-white flex items-center justify-center md:justify-start gap-2">
+                    COUNTDOWN JAPAN <span class="text-transparent bg-clip-text bg-gradient-to-r from-cdj-cyan via-white to-cdj-magenta">26/27</span>
+                </h1>
+                <p class="text-slate-400 text-xs sm:text-sm mt-2 flex items-center justify-center md:justify-start gap-2">
+                    <i data-lucide="grab" class="w-4 h-4 text-cdj-cyan"></i>
+                    카드 체크박스를 눌러 관심 아티스트를 강조하고, <span class="text-cdj-cyan font-bold">마우스로 끌어서</span> 일정을 자유롭게 배치하세요!
+                </p>
+            </div>
+
+            <!-- Total Counter Card -->
+            <div class="flex items-center gap-3 w-full md:w-auto justify-center md:justify-end">
+                <div class="bg-cdj-panel border border-cdj-border rounded-2xl p-3 px-5 flex items-center gap-4 shadow-xl">
+                    <div class="text-center">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase block">전체 아티스트</span>
+                        <span id="total-count" class="text-xl font-extrabold font-display text-slate-200">0</span>
+                        <span class="text-[10px] text-slate-500">팀</span>
+                    </div>
+                    <div class="w-px h-8 bg-cdj-border"></div>
+                    <div class="text-center">
+                        <span class="text-[10px] font-bold text-cdj-cyan uppercase block">선택한 아티스트</span>
+                        <span id="selected-count" class="text-2xl font-black font-display text-cdj-cyan">0</span>
+                        <span class="text-[10px] text-slate-400">팀</span>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <button id="reset-btn" class="flex items-center justify-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold py-2 px-3 rounded-xl border border-cdj-border transition shadow-sm">
+                        <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> 초기화
+                    </button>
+                    <button id="add-artist-btn" class="flex items-center justify-center gap-1.5 bg-gradient-to-r from-cdj-cyan to-blue-600 hover:from-blue-500 hover:to-cdj-cyan text-slate-950 font-black text-xs py-2 px-3 rounded-xl shadow-lg transition transform hover:-translate-y-0.5">
+                        <i data-lucide="plus" class="w-4 h-4"></i> 추가
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation & Filter Bar -->
+    <section class="sticky top-0 z-30 bg-slate-950/90 backdrop-blur-lg border-b border-cdj-border/80 py-3 px-4 sm:px-8">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
+            
+            <!-- Quick Filter Controls -->
+            <div class="flex items-center gap-2 w-full md:w-auto">
+                <button id="filter-all-btn" class="filter-tab active bg-cdj-cyan text-slate-950 font-bold text-xs px-3.5 py-1.5 rounded-lg transition shadow-md">
+                    전체 보기
+                </button>
+                <button id="filter-selected-btn" class="filter-tab bg-cdj-panel border border-cdj-border text-slate-300 hover:text-white font-bold text-xs px-3.5 py-1.5 rounded-lg transition flex items-center gap-1.5">
+                    <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-cdj-cyan"></i>
+                    선택한 아티스트만 보기
+                </button>
+            </div>
+
+            <!-- Search Bar -->
+            <div class="relative w-full md:w-72">
+                <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-slate-400"></i>
+                <input type="text" id="search-input" placeholder="아티스트 이름 검색..." class="w-full bg-cdj-panel border border-cdj-border text-xs rounded-xl pl-9 pr-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cdj-cyan transition">
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content: 5-Day Grid Columns -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 overflow-x-auto">
+        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3.5 min-w-[1100px] lg:min-w-0">
+            
+            <!-- Day 1: 12/26 (Sat) -->
+            <div class="day-column bg-cdj-panel/60 border border-cdj-border/80 rounded-2xl p-3 flex flex-col h-full" data-day="12/26">
+                <div class="bg-gradient-to-r from-red-600 to-rose-700 rounded-xl p-2.5 mb-3 text-center shadow-lg flex justify-between items-center px-3 border border-red-400/20">
+                    <div class="text-left">
+                        <span class="text-[10px] font-black text-red-200 block uppercase tracking-wider">DAY 1</span>
+                        <h2 class="text-base font-black font-display text-white">12月26日 <span class="text-xs font-bold">(土)</span></h2>
+                    </div>
+                    <span class="day-badge text-xs bg-black/40 text-white font-bold px-2.5 py-0.5 rounded-full border border-white/10" id="count-1226">0/0</span>
+                </div>
+                <div class="artist-list flex-1 space-y-2 min-h-[500px] p-1 rounded-xl transition-colors border border-transparent" id="list-1226" data-day="12/26"></div>
+            </div>
+
+            <!-- Day 2: 12/27 (Sun) -->
+            <div class="day-column bg-cdj-panel/60 border border-cdj-border/80 rounded-2xl p-3 flex flex-col h-full" data-day="12/27">
+                <div class="bg-gradient-to-r from-amber-600 to-orange-700 rounded-xl p-2.5 mb-3 text-center shadow-lg flex justify-between items-center px-3 border border-amber-400/20">
+                    <div class="text-left">
+                        <span class="text-[10px] font-black text-amber-200 block uppercase tracking-wider">DAY 2</span>
+                        <h2 class="text-base font-black font-display text-white">12月27日 <span class="text-xs font-bold">(日)</span></h2>
+                    </div>
+                    <span class="day-badge text-xs bg-black/40 text-white font-bold px-2.5 py-0.5 rounded-full border border-white/10" id="count-1227">0/0</span>
+                </div>
+                <div class="artist-list flex-1 space-y-2 min-h-[500px] p-1 rounded-xl transition-colors border border-transparent" id="list-1227" data-day="12/27"></div>
+            </div>
+
+            <!-- Day 3: 12/29 (Tue) -->
+            <div class="day-column bg-cdj-panel/60 border border-cdj-border/80 rounded-2xl p-3 flex flex-col h-full" data-day="12/29">
+                <div class="bg-gradient-to-r from-emerald-600 to-teal-700 rounded-xl p-2.5 mb-3 text-center shadow-lg flex justify-between items-center px-3 border border-emerald-400/20">
+                    <div class="text-left">
+                        <span class="text-[10px] font-black text-emerald-200 block uppercase tracking-wider">DAY 3</span>
+                        <h2 class="text-base font-black font-display text-white">12月29日 <span class="text-xs font-bold">(火)</span></h2>
+                    </div>
+                    <span class="day-badge text-xs bg-black/40 text-white font-bold px-2.5 py-0.5 rounded-full border border-white/10" id="count-1229">0/0</span>
+                </div>
+                <div class="artist-list flex-1 space-y-2 min-h-[500px] p-1 rounded-xl transition-colors border border-transparent" id="list-1229" data-day="12/29"></div>
+            </div>
+
+            <!-- Day 4: 12/30 (Wed) -->
+            <div class="day-column bg-cdj-panel/60 border border-cdj-border/80 rounded-2xl p-3 flex flex-col h-full" data-day="12/30">
+                <div class="bg-gradient-to-r from-blue-600 to-cyan-700 rounded-xl p-2.5 mb-3 text-center shadow-lg flex justify-between items-center px-3 border border-blue-400/20">
+                    <div class="text-left">
+                        <span class="text-[10px] font-black text-blue-200 block uppercase tracking-wider">DAY 4</span>
+                        <h2 class="text-base font-black font-display text-white">12月30日 <span class="text-xs font-bold">(水)</span></h2>
+                    </div>
+                    <span class="day-badge text-xs bg-black/40 text-white font-bold px-2.5 py-0.5 rounded-full border border-white/10" id="count-1230">0/0</span>
+                </div>
+                <div class="artist-list flex-1 space-y-2 min-h-[500px] p-1 rounded-xl transition-colors border border-transparent" id="list-1230" data-day="12/30"></div>
+            </div>
+
+            <!-- Day 5: 12/31 (Thu) -->
+            <div class="day-column bg-cdj-panel/60 border border-cdj-border/80 rounded-2xl p-3 flex flex-col h-full" data-day="12/31">
+                <div class="bg-gradient-to-r from-purple-600 to-fuchsia-700 rounded-xl p-2.5 mb-3 text-center shadow-lg flex justify-between items-center px-3 border border-purple-400/20">
+                    <div class="text-left">
+                        <span class="text-[10px] font-black text-purple-200 block uppercase tracking-wider">COUNTDOWN</span>
+                        <h2 class="text-base font-black font-display text-white">12月31日 <span class="text-xs font-bold">(木)</span></h2>
+                    </div>
+                    <span class="day-badge text-xs bg-black/40 text-white font-bold px-2.5 py-0.5 rounded-full border border-white/10" id="count-1231">0/0</span>
+                </div>
+                <div class="artist-list flex-1 space-y-2 min-h-[500px] p-1 rounded-xl transition-colors border border-transparent" id="list-1231" data-day="12/31"></div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Modal: Add Artist Custom -->
+    <div id="add-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-cdj-panel border border-cdj-border rounded-2xl max-w-sm w-full p-5 shadow-2xl relative">
+            <button id="close-modal-btn" class="absolute top-4 right-4 text-slate-400 hover:text-white">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            
+            <h3 class="text-base font-bold text-white mb-4 flex items-center gap-2">
+                <i data-lucide="plus-circle" class="w-5 h-5 text-cdj-cyan"></i>
+                아티스트 추가
+            </h3>
+
+            <form id="add-artist-form" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">날짜 선택</label>
+                    <select id="modal-date" class="w-full bg-slate-900 border border-cdj-border text-xs rounded-xl p-2.5 text-white focus:outline-none focus:border-cdj-cyan">
+                        <option value="12/26">12月26日 (土) - DAY 1</option>
+                        <option value="12/27">12月27日 (日) - DAY 2</option>
+                        <option value="12/29">12月29日 (火) - DAY 3</option>
+                        <option value="12/30">12月30日 (水) - DAY 4</option>
+                        <option value="12/31">12月31日 (木) - COUNTDOWN</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">아티스트 명</label>
+                    <input type="text" id="modal-name" required placeholder="예: Official髭男dism" class="w-full bg-slate-900 border border-cdj-border text-xs rounded-xl p-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-cdj-cyan">
+                </div>
+
+                <div class="pt-2 flex gap-2">
+                    <button type="button" id="cancel-modal-btn" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2 rounded-xl text-xs">
+                        취소
+                    </button>
+                    <button type="submit" class="flex-1 bg-cdj-cyan text-slate-950 font-black py-2 rounded-xl text-xs shadow-md hover:bg-cyan-300">
+                        추가하기
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // Exact 100% Extracted Artists Data from CDJ 26/27 Poster Image
+        const initialRawData = [
+            // 12月26日 (土)
+            { date: '12/26', name: 'ASIAN KUNG-FU GENERATION', isNew: true },
+            { date: '12/26', name: 'UNFAIR RULE', isNew: true },
+            { date: '12/26', name: 'オーイシマサヨシ', isNew: true },
+            { date: '12/26', name: 'KANA-BOON', isNew: false },
+            { date: '12/26', name: 'CANDY TUNE', isNew: true },
+            { date: '12/26', name: 'Creepy Nuts', isNew: true },
+            { date: '12/26', name: '櫻坂46', isNew: true },
+            { date: '12/26', name: '終活クラブ', isNew: true },
+            { date: '12/26', name: 'Juice=Juice', isNew: false },
+            { date: '12/26', name: 'Da-iCE', isNew: false },
+            { date: '12/26', name: '超特急', isNew: true },
+            { date: '12/26', name: 'ナナヲアカリ', isNew: true },
+            { date: '12/26', name: 'NELKE', isNew: false },
+            { date: '12/26', name: 'Novelbright', isNew: true },
+            { date: '12/26', name: 'NOMELON NOLEMON', isNew: false },
+            { date: '12/26', name: 'harha', isNew: false },
+            { date: '12/26', name: '羊文学', isNew: false },
+            { date: '12/26', name: 'ふみの', isNew: true },
+            { date: '12/26', name: 'ブランデー戦記', isNew: true },
+            { date: '12/26', name: 'FRUITS ZIPPER', isNew: false },
+            { date: '12/26', name: 'フレデリック', isNew: false },
+            { date: '12/26', name: 'plenty', isNew: true },
+            { date: '12/26', name: 'FLOW', isNew: true },
+            { date: '12/26', name: '星街すいせい', isNew: true },
+            { date: '12/26', name: 'MAZZEL', isNew: false },
+            { date: '12/26', name: 'MAISONdes', isNew: false },
+            { date: '12/26', name: 'ヨルシカ', isNew: true },
+            { date: '12/26', name: 'luv', isNew: true },
+            { date: '12/26', name: 'LE SSERAFIM', isNew: false },
+            { date: '12/26', name: 'Leina', isNew: true },
+            { date: '12/26', name: 'レトロリロン', isNew: false },
+            { date: '12/26', name: 'Reol', isNew: false },
+            { date: '12/26', name: 'Rol3ert', isNew: false },
+
+            // 12月27日 (日)
+            { date: '12/27', name: 'Aooo', isNew: false },
+            { date: '12/27', name: '幾田りら', isNew: true },
+            { date: '12/27', name: 'IS:SUE', isNew: true },
+            { date: '12/27', name: 'Wienners', isNew: false },
+            { date: '12/27', name: 'Age Factory', isNew: true },
+            { date: '12/27', name: 'HY', isNew: true },
+            { date: '12/27', name: 'Awich', isNew: false },
+            { date: '12/27', name: 'CUTIE STREET', isNew: false },
+            { date: '12/27', name: 'Cloudy', isNew: false },
+            { date: '12/27', name: 'KOTORI', isNew: false },
+            { date: '12/27', name: '35.7', isNew: false },
+            { date: '12/27', name: 'サンボマスター', isNew: false },
+            { date: '12/27', name: 'ZICO', isNew: true },
+            { date: '12/27', name: '四星球', isNew: true },
+            { date: '12/27', name: 'SUPER BEAVER', isNew: true },
+            { date: '12/27', name: '菅原圭', isNew: true },
+            { date: '12/27', name: 'sumika', isNew: false },
+            { date: '12/27', name: 'CHiCO with HoneyWorks', isNew: false },
+            { date: '12/27', name: '超ときめき♡宣伝部', isNew: false },
+            { date: '12/27', name: '東京スカパラダイスオーケストラ', isNew: false },
+            { date: '12/27', name: 'なぎごと', isNew: true },
+            { date: '12/27', name: '西野カナ', isNew: true },
+            { date: '12/27', name: 'NEXZ', isNew: true },
+            { date: '12/27', name: 'バチカン市国に愛されたい', isNew: true },
+            { date: '12/27', name: 'ハルカミライ', isNew: true },
+            { date: '12/27', name: 'FUNKY MONKEY B\'S', isNew: false },
+            { date: '12/27', name: 'ファントムシータ', isNew: true },
+            { date: '12/27', name: 'berry meet', isNew: true },
+            { date: '12/27', name: 'Penthouse', isNew: false },
+            { date: '12/27', name: 'moon drop', isNew: true },
+            { date: '12/27', name: 'モナキ', isNew: true },
+            { date: '12/27', name: 'ヤバイTシャツ屋さん', isNew: false },
+            { date: '12/27', name: 'LANA', isNew: false },
+
+            // 12月29日 (火)
+            { date: '12/29', name: 'アイナ・ジ・エンド', isNew: false },
+            { date: '12/29', name: '秋山黄色', isNew: true },
+            { date: '12/29', name: 'amazarashi', isNew: false },
+            { date: '12/29', name: '稲葉浩志', isNew: true },
+            { date: '12/29', name: 'Eve', isNew: false },
+            { date: '12/29', name: 'OddRe', isNew: false },
+            { date: '12/29', name: 'かいりきベア', isNew: true },
+            { date: '12/29', name: '9mm Parabellum Bullet', isNew: false },
+            { date: '12/29', name: 'KUZIRA', isNew: true },
+            { date: '12/29', name: 'CLAN QUEEN', isNew: false },
+            { date: '12/29', name: 'Suchmos', isNew: true },
+            { date: '12/29', name: 'Chevon', isNew: false },
+            { date: '12/29', name: 'SiM', isNew: false },
+            { date: '12/29', name: 'syudou', isNew: false },
+            { date: '12/29', name: '須田景凪', isNew: false },
+            { date: '12/29', name: 'SPARK!!SOUND!!SHOW!!', isNew: false },
+            { date: '12/29', name: 'すりぃ', isNew: true },
+            { date: '12/29', name: 'TAKU INOUE × 超かぐや姫!', isNew: true },
+            { date: '12/29', name: 'Dannie May', isNew: true },
+            { date: '12/29', name: 'w.o.d.', isNew: false },
+            { date: '12/29', name: 'tuki.', isNew: true },
+            { date: '12/29', name: 'TK from 凛として時雨', isNew: false },
+            { date: '12/29', name: 'Dizzy Sunfist', isNew: true },
+            { date: '12/29', name: '初音ミク', isNew: true },
+            { date: '12/29', name: '花冷え。', isNew: true },
+            { date: '12/29', name: 'PEOPLE 1', isNew: false },
+            { date: '12/29', name: 'ヒトリエ', isNew: true },
+            { date: '12/29', name: 'マキシマム ザ ホルモン', isNew: false },
+            { date: '12/29', name: 'MAN WITH A MISSION', isNew: false },
+            { date: '12/29', name: 'muque', isNew: false },
+            { date: '12/29', name: 'MAYSON\'s PARTY', isNew: false },
+            { date: '12/29', name: 'めいちゃん', isNew: true },
+            { date: '12/29', name: '礼賛', isNew: false },
+
+            // 12月30日 (水)
+            { date: '12/30', name: 'iLiFE!', isNew: false },
+            { date: '12/30', name: 'ano', isNew: true },
+            { date: '12/30', name: 'Ayumu Imazu', isNew: true },
+            { date: '12/30', name: 'indigo la End', isNew: false },
+            { date: '12/30', name: 'AEN', isNew: true },
+            { date: '12/30', name: 'ENHYPEN', isNew: false },
+            { date: '12/30', name: 'カネヨリマサル', isNew: true },
+            { date: '12/30', name: 'クレイジーウォウウォウ!!', isNew: true },
+            { date: '12/30', name: 'go!go!vanillas', isNew: false },
+            { date: '12/30', name: 'コレサワ', isNew: false },
+            { date: '12/30', name: 'SILENT SIREN', isNew: true },
+            { date: '12/30', name: 'Saucy Dog', isNew: false },
+            { date: '12/30', name: 'スキマスイッチ', isNew: false },
+            { date: '12/30', name: '鈴木愛理', isNew: false },
+            { date: '12/30', name: 'This is LAST', isNew: false },
+            { date: '12/30', name: 'DISH//', isNew: false },
+            { date: '12/30', name: 'TRACK15', isNew: false },
+            { date: '12/30', name: '中島健人', isNew: true },
+            { date: '12/30', name: '≒JOY', isNew: true },
+            { date: '12/30', name: 'にしな', isNew: true },
+            { date: '12/30', name: 'ねぎ塩豚丼', isNew: false },
+            { date: '12/30', name: 'BURNOUT SYNDROMES', isNew: true },
+            { date: '12/30', name: 'マカロニえんぴつ', isNew: false },
+            { date: '12/30', name: 'マルシィ', isNew: true },
+            { date: '12/30', name: 'ME:I', isNew: true },
+            { date: '12/30', name: '紫 今', isNew: true },
+            { date: '12/30', name: 'Mega Shinnosuke', isNew: false },
+            { date: '12/30', name: 'MON7A', isNew: false },
+            { date: '12/30', name: '[ユイカ]', isNew: true },
+            { date: '12/30', name: 'Little Glee Monster', isNew: true },
+            { date: '12/30', name: '緑黄色社会', isNew: false },
+            { date: '12/30', name: 'LEX', isNew: false },
+            { date: '12/30', name: '浪漫派マシュマロ', isNew: false },
+
+            // 12月31日 (木)
+            { date: '12/31', name: 'IMP.', isNew: true },
+            { date: '12/31', name: 'AKASAKI', isNew: true },
+            { date: '12/31', name: '汐れいら', isNew: true },
+            { date: '12/31', name: '打首獄門同好会', isNew: true },
+            { date: '12/31', name: 'Aimer', isNew: true },
+            { date: '12/31', name: 'おいしくるメロンパン', isNew: false },
+            { date: '12/31', name: 'the奥歯\'s', isNew: false },
+            { date: '12/31', name: 'キュウソネコカミ', isNew: true },
+            { date: '12/31', name: 'kurayamisaka', isNew: true },
+            { date: '12/31', name: 'クリープハイプ', isNew: false },
+            { date: '12/31', name: 'Kroi', isNew: true },
+            { date: '12/31', name: 'Sunny Girl', isNew: false },
+            { date: '12/31', name: 'サバシスター', isNew: false },
+            { date: '12/31', name: 'SIX LOUNGE', isNew: false },
+            { date: '12/31', name: 'SHANK', isNew: true },
+            { date: '12/31', name: '女王蜂', isNew: true },
+            { date: '12/31', name: 'jo0ji', isNew: true },
+            { date: '12/31', name: 'シンガーズハイ', isNew: false },
+            { date: '12/31', name: '3markets[ ]', isNew: true },
+            { date: '12/31', name: 'セカンドバッカー', isNew: false },
+            { date: '12/31', name: '超能力戦士ドリアン', isNew: true },
+            { date: '12/31', name: 'Chilli Beans.', isNew: true },
+            { date: '12/31', name: 'TETORA', isNew: false },
+            { date: '12/31', name: 'Tele', isNew: false },
+            { date: '12/31', name: 'Tentwenty', isNew: false },
+            { date: '12/31', name: '10-FEET', isNew: true },
+            { date: '12/31', name: 'なとり', isNew: false },
+            { date: '12/31', name: 'NEE', isNew: true },
+            { date: '12/31', name: 'ねぐせ。', isNew: false },
+            { date: '12/31', name: 'バックドロップシンデレラ', isNew: true },
+            { date: '12/31', name: 'Hump Back', isNew: false },
+            { date: '12/31', name: 'ハンブレッダーズ', isNew: true },
+            { date: '12/31', name: '04 Limited Sazabys', isNew: false },
+            { date: '12/31', name: 'BLUE ENCOUNT', isNew: true },
+            { date: '12/31', name: 'Blue Mash', isNew: true },
+            { date: '12/31', name: 'HEY-SMITH', isNew: false },
+            { date: '12/31', name: 'Paledusk', isNew: false },
+            { date: '12/31', name: 'My Hair is Bad', isNew: false },
+            { date: '12/31', name: 'MUCC', isNew: true },
+            { date: '12/31', name: 'ヤングスキニー', isNew: true },
+            { date: '12/31', name: 'Lavt', isNew: true },
+            { date: '12/31', name: 'Lucky Kilimanjaro', isNew: true },
+            { date: '12/31', name: 'リーガルリリー', isNew: true },
+            { date: '12/31', name: 'reGretGirl', isNew: false },
+            { date: '12/31', name: 'LiSA', isNew: false },
+            { date: '12/31', name: 'WURTS', isNew: false },
+            { date: '12/31', name: '忘れらんねえよ', isNew: false }
+        ];
+
+        // Format into state array with IDs & default selections
+        const defaultArtists = initialRawData.map((item, idx) => ({
+            id: 'art-' + (idx + 1),
+            date: item.date,
+            name: item.name,
+            isNew: item.isNew,
+            selected: false
+        }));
+
+        // State variables
+        let artists = JSON.parse(localStorage.getItem('cdj2627_full_lineup')) || defaultArtists;
+        let searchQuery = '';
+        let onlySelectedFilter = false;
+        let draggedArtistId = null;
+
+        function initIcons() {
+            if (window.lucide) lucide.createIcons();
+        }
+
+        // Main Render Function
+        function render() {
+            const days = ['12/26', '12/27', '12/29', '12/30', '12/31'];
+
+            days.forEach(day => {
+                const listEl = document.getElementById(`list-${day.replace('/', '')}`);
+                const countEl = document.getElementById(`count-${day.replace('/', '')}`);
+                if (!listEl) return;
+
+                const dayArtists = artists.filter(a => a.date === day);
+                const selectedInDay = dayArtists.filter(a => a.selected).length;
+
+                if (countEl) {
+                    countEl.innerText = `${selectedInDay}/${dayArtists.length}`;
+                    if (selectedInDay > 0) {
+                        countEl.classList.add('text-cdj-cyan', 'border-cdj-cyan/50');
+                    } else {
+                        countEl.classList.remove('text-cdj-cyan', 'border-cdj-cyan/50');
+                    }
+                }
+
+                // Filter logic
+                const filtered = dayArtists.filter(a => {
+                    const matchSearch = a.name.toLowerCase().includes(searchQuery.toLowerCase());
+                    const matchSelected = !onlySelectedFilter || a.selected;
+                    return matchSearch && matchSelected;
+                });
+
+                if (filtered.length === 0) {
+                    listEl.innerHTML = `
+                        <div class="h-28 flex flex-col items-center justify-center border border-dashed border-cdj-border/60 rounded-xl text-slate-500 text-xs p-3 text-center pointer-events-none select-none">
+                            <i data-lucide="inbox" class="w-5 h-5 mb-1 opacity-40"></i>
+                            표시할 아티스트가 없습니다
+                        </div>
+                    `;
+                } else {
+                    listEl.innerHTML = filtered.map(artist => `
+                        <div data-id="${artist.id}" 
+                             draggable="true" 
+                             class="artist-card bg-cdj-card border ${artist.selected ? 'highlighted' : 'border-cdj-border'} p-2.5 rounded-xl flex items-center justify-between gap-2 relative group cursor-grab active:cursor-grabbing">
+                            
+                            <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                                <input type="checkbox" ${artist.selected ? 'checked' : ''} 
+                                       onchange="toggleSelect('${artist.id}', event)"
+                                       class="artist-checkbox w-4 h-4 rounded border-slate-600 text-cdj-cyan focus:ring-0 focus:ring-offset-0 bg-slate-900 cursor-pointer flex-shrink-0">
+                                
+                                <span class="artist-name font-bold text-xs text-slate-200 truncate group-hover:text-cdj-cyan transition-colors">
+                                    ${escapeHtml(artist.name)}
+                                </span>
+
+                                ${artist.isNew ? `
+                                    <span class="badge-new text-[9px] font-black bg-cdj-magenta text-white px-1.5 py-0.2 rounded uppercase tracking-tighter flex-shrink-0">
+                                        NEW
+                                    </span>
+                                ` : ''}
+                            </div>
+
+                            <div class="flex items-center gap-1 flex-shrink-0">
+                                <button onclick="deleteArtist('${artist.id}', event)" title="삭제" class="text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity p-1">
+                                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                </button>
+                                <span class="text-slate-600 hover:text-slate-400 p-0.5" title="드래그하여 이동">
+                                    <i data-lucide="grip-vertical" class="w-3.5 h-3.5"></i>
+                                </span>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            });
+
+            // Update Total Stats
+            document.getElementById('total-count').innerText = artists.length;
+            document.getElementById('selected-count').innerText = artists.filter(a => a.selected).length;
+
+            attachDragAndDropListeners();
+            initIcons();
+            saveToLocalStorage();
+        }
+
+        // HTML5 Drag and Drop logic
+        function attachDragAndDropListeners() {
+            const cards = document.querySelectorAll('.artist-card');
+            const lists = document.querySelectorAll('.artist-list');
+
+            cards.forEach(card => {
+                card.addEventListener('dragstart', (e) => {
+                    draggedArtistId = card.getAttribute('data-id');
+                    card.classList.add('dragging');
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', draggedArtistId);
+                });
+
+                card.addEventListener('dragend', () => {
+                    card.classList.remove('dragging');
+                    lists.forEach(l => l.classList.remove('drag-over'));
+                });
+            });
+
+            lists.forEach(list => {
+                list.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                    list.classList.add('drag-over');
+
+                    const afterElement = getDragAfterElement(list, e.clientY);
+                    const draggingCard = document.querySelector('.dragging');
+                    if (draggingCard && list) {
+                        if (afterElement == null) {
+                            list.appendChild(draggingCard);
+                        } else {
+                            list.insertBefore(draggingCard, afterElement);
+                        }
+                    }
+                });
+
+                list.addEventListener('dragleave', () => {
+                    list.classList.remove('drag-over');
+                });
+
+                list.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    list.classList.remove('drag-over');
+                    updateStateFromDOM();
+                });
+            });
+        }
+
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.artist-card:not(.dragging)')];
+
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        function updateStateFromDOM() {
+            const newArtists = [];
+            const days = ['12/26', '12/27', '12/29', '12/30', '12/31'];
+
+            days.forEach(day => {
+                const listEl = document.getElementById(`list-${day.replace('/', '')}`);
+                if (!listEl) return;
+                
+                const cardNodes = listEl.querySelectorAll('.artist-card');
+                cardNodes.forEach(node => {
+                    const id = node.getAttribute('data-id');
+                    const existing = artists.find(a => a.id === id);
+                    if (existing) {
+                        newArtists.push({
+                            ...existing,
+                            date: day
+                        });
+                    }
+                });
+            });
+
+            // Keep filtered out artists preserved
+            artists.forEach(a => {
+                if (!newArtists.some(na => na.id === a.id)) {
+                    newArtists.push(a);
+                }
+            });
+
+            artists = newArtists;
+            render();
+        }
+
+        // Toggle Selection
+        window.toggleSelect = function(id, event) {
+            if(event) event.stopPropagation();
+            artists = artists.map(a => a.id === id ? { ...a, selected: !a.selected } : a);
+            render();
+        }
+
+        // Delete Individual Artist
+        window.deleteArtist = function(id, event) {
+            if(event) event.stopPropagation();
+            artists = artists.filter(a => a.id !== id);
+            render();
+        }
+
+        function escapeHtml(text) {
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        function saveToLocalStorage() {
+            localStorage.setItem('cdj2627_full_lineup', JSON.stringify(artists));
+        }
+
+        // DOM Ready Initializer
+        document.addEventListener('DOMContentLoaded', () => {
+            render();
+
+            // Search Filter
+            document.getElementById('search-input').addEventListener('input', (e) => {
+                searchQuery = e.target.value;
+                render();
+            });
+
+            // Filter Tabs
+            const filterAllBtn = document.getElementById('filter-all-btn');
+            const filterSelectedBtn = document.getElementById('filter-selected-btn');
+
+            filterAllBtn.addEventListener('click', () => {
+                onlySelectedFilter = false;
+                filterAllBtn.className = 'filter-tab active bg-cdj-cyan text-slate-950 font-bold text-xs px-3.5 py-1.5 rounded-lg transition shadow-md';
+                filterSelectedBtn.className = 'filter-tab bg-cdj-panel border border-cdj-border text-slate-300 hover:text-white font-bold text-xs px-3.5 py-1.5 rounded-lg transition flex items-center gap-1.5';
+                render();
+            });
+
+            filterSelectedBtn.addEventListener('click', () => {
+                onlySelectedFilter = true;
+                filterSelectedBtn.className = 'filter-tab active bg-cdj-cyan text-slate-950 font-bold text-xs px-3.5 py-1.5 rounded-lg transition shadow-md flex items-center gap-1.5';
+                filterAllBtn.className = 'filter-tab bg-cdj-panel border border-cdj-border text-slate-300 hover:text-white font-bold text-xs px-3.5 py-1.5 rounded-lg transition';
+                render();
+            });
+
+            // Reset Button
+            document.getElementById('reset-btn').addEventListener('click', () => {
+                if (confirm('모든 아티스트 순서 및 체크박스 선택을 포스터 기본 상태로 초기화하시겠습니까?')) {
+                    artists = [...defaultArtists];
+                    render();
+                }
+            });
+
+            // Modal Events
+            const modal = document.getElementById('add-modal');
+            const openModalBtn = document.getElementById('add-artist-btn');
+            const closeModalBtn = document.getElementById('close-modal-btn');
+            const cancelModalBtn = document.getElementById('cancel-modal-btn');
+            const addForm = document.getElementById('add-artist-form');
+
+            openModalBtn.addEventListener('click', () => modal.classList.remove('hidden'));
+            closeModalBtn.addEventListener('click', () => modal.classList.add('hidden'));
+            cancelModalBtn.addEventListener('click', () => modal.classList.add('hidden'));
+
+            addForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const newName = document.getElementById('modal-name').value.trim();
+                const newDate = document.getElementById('modal-date').value;
+
+                if (newName) {
+                    artists.unshift({
+                        id: 'custom-' + Date.now(),
+                        date: newDate,
+                        name: newName,
+                        isNew: true,
+                        selected: true
+                    });
+                    render();
+                    addForm.reset();
+                    modal.classList.add('hidden');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
